@@ -1,7 +1,8 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
 
-datas = [('D:/Luyuan/desktop/app.ico', '.')]
+import os
+datas = [(os.path.join(os.path.dirname(os.path.abspath(SPEC)), 'app.ico'), '.')]
 binaries = []
 hiddenimports = ['clr', 'System.Windows.Forms', 'System.Drawing']
 tmp_ret = collect_all('webview')

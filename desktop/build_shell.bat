@@ -1,7 +1,8 @@
 @echo off
 chcp 65001 >nul
 cd /d %~dp0
-set PY=D:\Luyuan\.venv\Scripts\python.exe
+rem 解释器：优先用环境变量 PY，其次 python
+if not defined PY set PY=python
 set ICO=%~dp0app.ico
 
 echo [1/3] clean

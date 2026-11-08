@@ -59,19 +59,31 @@ python main.py            # 或双击 launch.bat
 **必需**：Windows 10/11、Python 3.11+。
 **可选**：Syncthing（三端同步）、Ollama（本地模型问答）、微信客户端（消息转待办）。
 
-## 四、隐私与数据
+## 四、打包成 exe（Windows 单机版）
+
+```bat
+pip install pyinstaller
+cd desktop
+build_shell.bat
+:: 产物：desktop\dist\Luyuan\Luyuan.exe
+```
+
+打包用 PyInstaller onedir 模式（`desktop/Luyuan.spec`），webview / pythonnet / pystray 全部 collect-all。
+`build_shell.bat` 里的解释器优先读环境变量 `PY`，没设就用 PATH 里的 `python`。
+
+## 五、隐私与数据
 
 - **没有服务端**：所有数据在你本机，`data/` 目录 + Syncthing 同步目录。
 - **没有遥测**：代码里没有任何上报端点。
 - **密钥只在本地**：`config.json` 已在 `.gitignore` 中，永不入库；模板里是 `PASTE_YOUR_KEY_HERE`。
 - **私密内容默认不外发**：`privacy.allow_private_outbound` 默认 `false`，要发必须显式登记来源。
 
-## 五、状态
+## 六、状态
 
 - 桌面端：长期自用、按周迭代（`PROGRESS.md` 在私有分支维护，本仓库只放可运行代码）。
 - 重构进行中：模块已按 `luyuan/core|io|jobs|web` 分层，旧脚本仍在根目录待迁移。
 - 手机端：[luheflyfly/luyuan](https://github.com/luheflyfly/luyuan)（versionCode 131，已发布正式包）。
 
-## 六、许可
+## 七、许可
 
 [MIT](LICENSE) © 2026 路河
