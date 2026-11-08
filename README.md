@@ -42,23 +42,19 @@ tests/               单元与冒烟测试
 
 ## 三、跑起来
 
+**最省事**：装上 [Python 3.11+](https://www.python.org/downloads/)（勾 *Add python.exe to PATH*）后，双击根目录的 `start.bat`——自动建 `.venv`、装依赖、复制 `config.json`、启动。
+
+**手动**：
+
 ```bash
-# 1) 依赖（Python 3.11+）
 pip install -r requirements.txt
-
-# 2) 配置：模板复制成 config.json，填自己的路径与 key
 cp config.example.json config.json      # Windows: copy config.example.json config.json
-
-# 3) 模型：本地转写模型按需下载（首次约 1 GB，缓存在 models/）
-python download_models.py
-
-# 4) 启动
-python main.py            # 或双击 launch.bat
+python download_models.py               # 可选：本地转写模型（约 1 GB，只需一次）
+python main.py                          # 或双击 launch.bat
 ```
 
 **必需**：Windows 10/11、Python 3.11+。
 **可选**：Syncthing（三端同步）、Ollama（本地模型问答）、微信客户端（消息转待办）。
-
 ## 四、打包成 exe（Windows 单机版）
 
 ```bat
