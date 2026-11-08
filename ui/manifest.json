@@ -1,0 +1,21 @@
+{
+  "name": "路远 · 语音记事",
+  "short_name": "路远",
+  "description": "本地语音记事面板",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f4",
+  "theme_color": "#f6f7f4",
+  "icons": [
+    {
+      "src": "/ui/luyuan-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/ui/路远.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}

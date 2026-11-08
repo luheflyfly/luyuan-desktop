@@ -1,0 +1,37 @@
+# 路远 · 桌面端依赖（未锁版本；按本机实测可用环境安装）
+# Python 3.11+ / Windows 10/11
+
+# ── Web 服务（本地面板与手机端都走它）──
+fastapi
+uvicorn
+pydantic
+requests
+
+# ── 语音识别与音频 ──
+funasr                 # SenseVoice / Paraformer 本地转写
+torch
+transformers
+sounddevice
+soundfile
+librosa
+numpy
+scipy
+
+# ── 桌面能力 ──
+pywebview               # import webview
+pystray                 # 托盘
+Pillow                  # import PIL
+pynput                  # 全局热键
+pywin32                 # win32api / win32gui / win32com / win32process / win32ui
+winotify                # Windows 通知
+pythonnet               # import clr / System（部分 Windows 组件）
+
+# ── 文本处理 ──
+pypinyin
+rapidfuzz
+rapidocr_onnxruntime    # 截图/消息 OCR
+
+# 说明：
+# - 本地大模型问答走 Ollama（http://localhost:11434），不是 pip 依赖；
+#   不装也能跑，只是问答会回落规则/模板。
+# - 微信消息转待办需要桌面微信客户端已登录，不需要额外 pip 包。

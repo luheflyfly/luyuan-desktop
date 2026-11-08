@@ -1,0 +1,50 @@
+# ── 重构基线（2026-10-30）──
+# 只跟踪「活代码 + 契约文档」，运行期产物、用户数据、密钥、历史备份一律不进版本库。
+
+# 密钥 / 本机配置（明文 key 严禁入库；模板见 config.example.json）
+config.json
+.ghtoken.txt
+*.key
+*.pem
+*.p12
+.env
+
+# 历史备份（10.5MB 的旧 key/keystore 快照，已有 git 之外的价值，不重复跟踪）
+.zcode_backup/
+_backup_RealScroggins-1_20260910/
+_drafts/
+
+# 运行时与依赖
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+runtime/
+tools/
+models/
+
+# 打包产物（85MB+/轮）
+App/
+desktop/build/
+desktop/dist/
+desktop/.webview/
+desktop/_shots/
+
+# 用户数据（含 208MB 录音、40MB 模型、每日 200MB zip；另行冷备）
+data/
+
+# 大二进制与日志
+*.wav
+*.mp3
+*.mp4
+*.zip
+*.exe
+*.dll
+*.pyd
+ci_fail.log
+*.log
+*.tmp
+
+# 重构期产物（审计与基线，可重跑生成）
+_refactor/baseline.json
+_refactor/audit/data-stats.json

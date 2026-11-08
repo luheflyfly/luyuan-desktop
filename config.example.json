@@ -1,0 +1,118 @@
+{
+  "samplerate": 16000,
+  "channels": 1,
+  "notes_dir": "data/notes",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8777
+  },
+  "hotkey": {
+    "enabled": true,
+    "combo": "<f10>"
+  },
+  "readlater": {
+    "hotkey": "",
+    "select_hotkey": "<ctrl>+<alt>+c",
+    "enabled": false
+  },
+  "capture": {
+    "max_seconds": 12,
+    "silence_seconds": 1.2,
+    "min_seconds": 0.6,
+    "rms_threshold": 0.012
+  },
+  "wakeword": {
+    "enabled": false,
+    "word": "路远",
+    "model_dir": "models/luyuan_wakeword",
+    "sensitivity": 0.5,
+    "listen_seconds": 3,
+    "threshold": 0.94,
+    "model": "<project-root>\\models\\luyuan_wakeword\\luyuan_model.json"
+  },
+  "stt": {
+    "sensevoice_dir": "models/SenseVoiceSmall",
+    "vad_dir": "models/VAD",
+    "device": "cpu",
+    "semsearch": {
+      "enabled": true
+    },
+    "correct": {
+      "enabled": true,
+      "model": "auto",
+      "endpoint": "http://localhost:11434",
+      "timeout": 30
+    }
+  },
+  "autosave": true,
+  "diary": {
+    "enabled": true,
+    "remind_time": "21:30"
+  },
+  "quicknote": {
+    "hotkey": "<cmd>+<shift>+<f23>"
+  },
+  "overlay": {
+    "engine": "pywebview"
+  },
+  "course": {
+    "remind_enabled": true,
+    "remind_minutes": 15
+  },
+  "semester_start": "",
+  "askaway": {
+    "enabled": true,
+    "base_url": "https://api.deepseek.com",
+    "model": "deepseek-v4-flash",
+    "api_key": "PASTE_YOUR_KEY_HERE",
+    "fallback_model": "qwen3.5:4b",
+    "private_tag": "私密"
+  },
+  "privacy": {
+    "allow_private_outbound": false,
+    "allowed_sources": [],
+    "note": "私密内容默认不外发；置 true 或把来源登记进 allowed_sources 才放行（2026-09-13 红线变更）"
+  },
+  "away_sense": {
+    "enabled": true,
+    "check_interval": 20,
+    "confirm_checks": 4,
+    "home_ssids": [
+      "YOUR_WIFI",
+      "YOUR_WIFI",
+      "YOUR_WIFI",
+      "YOUR_WIFI",
+      "YOUR_WIFI"
+    ],
+    "home_gateway_macs": [
+      "aa-bb-cc-dd-ee-ff",
+      "aa-bb-cc-dd-ee-ff",
+      "aa-bb-cc-dd-ee-ff",
+      "aa-bb-cc-dd-ee-ff",
+      "aa-bb-cc-dd-ee-ff"
+    ]
+  },
+  "birthday": {
+    "enabled": true,
+    "remind_time": "08:00"
+  },
+  "backup": {
+    "enabled": true,
+    "keep": 14
+  },
+  "trash_autopurge": {
+    "enabled": true,
+    "days": 30
+  },
+  "vision": {
+    "auto_confirm": false
+  },
+  "wechat": {
+    "enabled": true,
+    "auto_send": false,
+    "echo": true,
+    "safety_seconds": 120,
+    "test_target": "某个微信昵称"
+  },
+  "_comment": "模板文件：复制为 config.json 后填自己的 key。真实 config.json 不入版本库。"
+}

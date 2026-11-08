@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>路远 · 悬浮层 UI（实现稿）</title>
+<style>
+  :root{
+    --bg:#f6f7f4; --card:#ffffff; --primary:#3b82f6; --txt:#1f2937;
+    --sub:#6b7280; --line:#e5e7eb; --green:#10b981; --amber:#f59e0b; --red:#ef4444;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI","Microsoft YaHei UI",system-ui,sans-serif;
+       background:#eef0ea;color:var(--txt);padding:26px 30px 48px}
+  h1{font-size:20px;margin-bottom:4px}
+  .sub{color:var(--sub);font-size:13px;margin-bottom:16px;line-height:1.7}
+  h2{font-size:15px;margin:26px 0 10px}
+  .tag{display:inline-block;background:var(--primary);color:#fff;border-radius:6px;
+       font-size:11px;padding:2px 8px;margin-left:8px;vertical-align:2px}
+
+  /* ============ 模拟桌面 ============ */
+  .desktop{position:relative;height:400px;border-radius:18px;overflow:hidden;
+    background:linear-gradient(135deg,#1e293b 0%,#312e81 45%,#7c3aed 100%);}
+  .desktop::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(600px 240px at 78% 18%,rgba(255,255,255,.10),transparent)}
+  .dt-label{position:absolute;left:18px;top:14px;color:rgba(255,255,255,.55);
+            font-size:12px;letter-spacing:1px;z-index:2}
+  .taskbar{position:absolute;left:0;right:0;bottom:0;height:44px;
+    background:rgba(15,17,26,.72);backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;gap:14px;
+    color:#cbd5e1;font-size:12px}
+  .taskbar .dot{width:22px;height:22px;border-radius:6px;background:#334155;display:inline-block}
+
+  /* 浅色桌面 */
+  .lightwrap{position:relative;height:200px;border-radius:18px;overflow:hidden;
+    background:linear-gradient(135deg,#dbe4ff 0%,#f6f7f4 60%,#e0f2e9 100%);
+    border:1px solid var(--line)}
+
+  /* ============ ① 录音胶囊（纸白，三态通用） ============ */
+  .pill{display:flex;align-items:center;gap:10px;
+    background:rgba(255,255,255,.96);
+    border:1px solid rgba(0,0,0,.06);
+    border-radius:999px;
+    padding:11px 18px 11px 14px;
+    box-shadow:0 10px 30px rgba(0,0,0,.28);
+    min-width:196px}
+  .pulse{width:12px;height:12px;border-radius:50%;background:var(--primary);
+         position:relative;flex:none}
+  .pulse::after{content:"";position:absolute;inset:-5px;border-radius:50%;
+    border:2px solid var(--primary);opacity:.5;animation:breath 1.6s ease-out infinite}
+  @keyframes breath{0%{transform:scale(.5);opacity:.7}
+                    80%{transform:scale(1.35);opacity:0}100%{opacity:0}}
+  .pill .t1{font-size:14px;font-weight:600;letter-spacing:.5px}
+  .pill .t2{font-size:12px;color:var(--sub);font-variant-numeric:tabular-nums;margin-left:auto}
+  .grab{width:4px;height:26px;border-radius:2px;background:var(--line);
+        margin-left:6px;cursor:grab;flex:none}
+
+  /* ② 识别中 = 琥珀转圈 */
+  .pill.thinking .pulse{background:var(--amber)}
+  .pill.thinking .pulse::after{border-color:var(--amber);
+    animation:spin 1s linear infinite;border-radius:50%;
+    border-right-color:transparent;inset:-2px;opacity:1}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ③ 已记录 = 绿点 + 2 秒后淡出 */
+  .pill.saved{min-width:0}
+  .pill.saved .pulse{background:var(--green)}
+  .pill.saved .pulse::after{display:none}
+  .pill.fadeout{animation:fadeOut .45s ease forwards}
+  @keyframes fadeOut{to{opacity:0;transform:translateY(4px)}}
+
+  /* ============ ④ 速记悬浮卡 ============ */
+  .quick{width:340px;background:rgba(255,255,255,.97);
+    border:1px solid rgba(0,0,0,.06);
+    border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.34);overflow:hidden}
+  .quick .head{display:flex;align-items:center;gap:8px;padding:12px 16px 0;
+    color:var(--sub);font-size:12px}
+  .quick .head .logo{width:16px;height:16px;border-radius:5px;background:var(--primary);
+    color:#fff;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700}
+  .quick input{width:100%;border:none;outline:none;background:transparent;font:inherit;
+    font-size:17px;padding:10px 18px 4px;color:var(--txt)}
+  .quick input::placeholder{color:#9ca3af}
+  .quick .row{display:flex;align-items:center;gap:6px;padding:10px 14px 12px}
+  .chip{font-size:11px;color:var(--sub);background:#f3f4f6;border:1px solid var(--line);
+    border-radius:999px;padding:4px 10px}
+  .chip.key{color:var(--primary);border-color:#dbeafe;background:#eff6ff}
+  .quick .row .spacer{flex:1}
+  .send{background:var(--primary);color:#fff;border:none;border-radius:999px;
+    font-size:12px;padding:6px 14px;cursor:pointer}
+
+  /* 定位 */
+  .float{position:absolute;right:26px;bottom:64px;z-index:5}
+  .float2{position:absolute;right:26px;top:52px;z-index:5}
+  .float3{position:absolute;left:26px;bottom:64px;z-index:5}
+  .stack{display:flex;flex-direction:column;gap:12px;align-items:flex-end}
+
+  /* ============ 演示控制条 ============ */
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+       background:#fff;border:1px solid var(--line);border-radius:12px;
+       padding:10px 12px;margin-bottom:14px}
+  .bar b{font-size:13px;margin-right:4px}
+  .bar button{font:inherit;font-size:12px;padding:6px 14px;border-radius:999px;
+    border:1px solid var(--line);background:#f3f4f6;color:var(--txt);cursor:pointer}
+  .bar button:hover{background:#e5e7eb}
+  .bar button.act{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+  .note{color:var(--sub);font-size:13px;line-height:1.9;margin-top:10px}
+  .note b{color:var(--txt)}
+  .note code{background:#f3f4f6;border:1px solid var(--line);border-radius:4px;
+             padding:1px 5px;font-size:12px}
+  .diff{background:#fff;border:1px solid var(--line);border-left:3px solid var(--green);
+        border-radius:8px;padding:12px 16px;margin-top:10px;font-size:13px;line-height:1.9}
+</style>
+</head>
+<body>
+  <h1>路远 · 悬浮层 UI <span class="tag">实现稿 · 补齐视觉稿缺失项</span></h1>
+  <div class="sub">
+    严格按 <code>overlay-mockup.html</code> 的「纸白胶囊」语言实现，并补齐原稿只写在设计说明里、
+    尚未落到 CSS 的几项。下方动画即实际效果（呼吸灯在闪、识别中在转、已记录会淡出）。
+  </div>
+
+  <!-- 交互演示：切换主胶囊状态 -->
+  <div class="bar">
+    <b>主胶囊状态：</b>
+    <button id="b-listen" class="act" onclick="setMode('')">🎤 聆听中</button>
+    <button id="b-think" onclick="setMode('thinking')">⏳ 识别中</button>
+    <button id="b-saved" onclick="setMode('saved')">✅ 已记录</button>
+    <button onclick="replaySaved()">↻ 重放淡出</button>
+  </div>
+
+  <h2>深色壁纸上 · 语音三态 + 速记输入窗</h2>
+  <div class="desktop">
+    <div class="dt-label">模拟 Windows 桌面</div>
+
+    <!-- 右下：主胶囊（可切换三态）+ 上方固定一个识别中 -->
+    <div class="float">
+      <div class="stack">
+        <div class="pill thinking">
+          <span class="pulse"></span><span class="t1">识别中</span>
+          <span class="t2">路远</span><span class="grab"></span>
+        </div>
+        <div class="pill" id="main-pill">
+          <span class="pulse"></span><span class="t1" id="main-t1">聆听中</span>
+          <span class="t2" id="main-t2">00:32</span><span class="grab"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右上：速记卡 -->
+    <div class="float2">
+      <div class="quick">
+        <div class="head"><span class="logo">路</span> 速记 · 随手一句</div>
+        <input placeholder="记一笔，回车即存…">
+        <div class="row">
+          <span class="chip key">F10 说话</span><span class="chip">⏎ 保存</span>
+          <span class="chip">Esc 收起</span>
+          <span class="spacer"></span>
+          <button class="send">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 左下：已记录 -->
+    <div class="float3">
+      <div class="pill saved" id="saved-pill">
+        <span class="pulse"></span><span class="t1">✅ 已记录</span>
+        <span class="t2" style="margin-left:8px">点击查看</span>
+      </div>
+    </div>
+
+    <div class="taskbar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+  </div>
+
+  <h2>浅色壁纸上 · 同一套悬浮件（自动适配）</h2>
+  <div class="lightwrap">
+    <div class="float" style="bottom:26px;right:30px">
+      <div class="pill"><span class="pulse"></span><span class="t1">聆听中</span>
+        <span class="t2">00:07</span><span class="grab"></span></div>
+    </div>
+  </div>
+
+  <div class="diff">
+    <b>本稿相对视觉稿补齐 / 修正的项</b><br>
+    ① <b>胶囊圆角</b> <code>border-radius:999px</code> —— 原稿 CSS 有，现有 overlay.py 漏了（只靠窗口 DWM 圆角，不是胶囊）。<br>
+    ② <b>长阴影</b> <code>0 10px 30px rgba(0,0,0,.28)</code> —— 现有实现无元素级阴影。<br>
+    ③ <b>拖拽把手</b> <code>.grab</code>（4×26 圆角竖条）—— 现有实现没有这个视觉把手。<br>
+    ④ <b>速记卡圆角+阴影</b> <code>border-radius:20px</code> / <code>0 18px 50px</code> —— 现有实现缺失。<br>
+    ⑤ <b>已记录淡出</b>：新增 <code>.fadeout</code> 动画（0.45s 淡出+下沉），替掉现有的硬切 <code>hide()</code>。
+  </div>
+
+  <div class="note">
+    <b>设计说明：</b>① 所有悬浮件统一"纸白胶囊"语言：白底 96% 不透明 + 大圆角 + 柔和长阴影；
+    ② 聆听中 = 蓝色呼吸灯 + 等宽数字计时；识别中 = 琥珀色转圈；已记录 = 绿点，2 秒后自动淡出；
+    ③ 右侧小竖条 = 拖拽把手；④ 速记窗顶部一行小字交代"你在哪"，输入框 17px 大字，底部快捷键提示；
+    ⑤ 技术上用 pywebview（系统自带 WebView2，无需装浏览器）。
+  </div>
+
+<script>
+// ---- 主胶囊三态切换（演示用）----
+let sec = 32;
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function setMode(mode){
+  const p = document.getElementById('main-pill');
+  p.classList.remove('thinking','saved','fadeout');
+  if (mode) p.classList.add(mode);
+
+  const t1 = document.getElementById('main-t1');
+  const t2 = document.getElementById('main-t2');
+  if (mode === 'thinking'){ t1.textContent = '识别中'; t2.textContent = '路远'; }
+  else if (mode === 'saved'){ t1.textContent = '✅ 已记录'; t2.textContent = '点击查看'; }
+  else { t1.textContent = '聆听中'; t2.textContent = pad(Math.floor(sec/60))+':'+pad(sec%60); }
+
+  ['','thinking','saved'].forEach(m=>{
+    const id = 'b-' + (m===''?'listen':(m==='thinking'?'think':'saved'));
+    document.getElementById(id).classList.toggle('act', m===mode);
+  });
+
+  // 已记录：2 秒后自动淡出（对应实际实现的 2s 后隐藏）
+  if (mode === 'saved'){ setTimeout(()=> p.classList.add('fadeout'), 2000); }
+}
+
+// 左下"已记录"胶囊也做一次淡出演示
+function replaySaved(){
+  const s = document.getElementById('saved-pill');
+  s.classList.remove('fadeout');
+  void s.offsetWidth;              // 强制重排以重启动画
+  setTimeout(()=> s.classList.add('fadeout'), 2000);
+}
+
+// 计时器走动（仅聆听态）
+setInterval(()=>{
+  const p = document.getElementById('main-pill');
+  if (!p.classList.contains('thinking') && !p.classList.contains('saved')){
+    sec++; document.getElementById('main-t2').textContent = pad(Math.floor(sec/60))+':'+pad(sec%60);
+  }
+}, 1000);
+
+replaySaved();   // 进页面即演示一次「2 秒后淡出」
+</script>
+</body>
+</html>

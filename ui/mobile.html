@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+  <title>路远 · 手机记事</title>
+  <style>
+    :root { --bg:#0f1320; --card:#171c2c; --line:#27304a; --txt:#e8efff; --sub:#8b97b5;
+            --blue:#5a96ff; --green:#46d39a; --red:#ff6b6b; --amber:#ffce5a; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body { margin:0; padding:0; }
+    body { font-family:"Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;
+           background:var(--bg); color:var(--txt);
+           padding-bottom:calc(24px + env(safe-area-inset-bottom)); }
+    .wrap { max-width:560px; margin:0 auto; }
+
+    header { position:sticky; top:0; z-index:5;
+             background:rgba(15,19,32,.94); backdrop-filter:blur(8px);
+             border-bottom:1px solid var(--line);
+             padding:calc(10px + env(safe-area-inset-top)) 14px 10px; }
+    .top { display:flex; align-items:center; gap:10px; }
+    .brand { font-size:19px; font-weight:700; letter-spacing:1px; }
+    .brand small { color:var(--sub); font-weight:400; font-size:12px; margin-left:6px; }
+    .spacer { flex:1; }
+    .refresh { background:#222a40; color:var(--sub); border:none; border-radius:10px;
+               padding:8px 12px; font:inherit; font-size:13px; cursor:pointer; }
+    .refresh:active { filter:brightness(1.2); }
+
+    button { font:inherit; cursor:pointer; border:none; border-radius:12px;
+             color:#fff; background:var(--blue); transition:.12s; }
+    button:active { filter:brightness(1.15); }
+    button:disabled { opacity:.55; cursor:default; }
+
+    .rec { display:block; width:100%; margin-top:10px; padding:14px; font-size:16px;
+           font-weight:600; background:var(--blue); }
+    .rec.stop { background:var(--red); }
+
+    .bar { display:flex; gap:8px; padding:12px 14px 4px; }
+    .bar input, .bar textarea { flex:1; width:100%; background:#0c1020; color:var(--txt);
+           border:1px solid var(--line); border-radius:12px; padding:12px 14px; font:inherit;
+           font-size:16px; resize:none; }
+    .bar textarea { min-height:46px; line-height:1.4; }
+    .add { background:var(--green); color:#06281c; font-weight:600; padding:0 18px;
+           align-self:stretch; }
+
+    .search { padding:6px 14px 10px; }
+    .search input { width:100%; background:#0c1020; color:var(--txt);
+           border:1px solid var(--line); border-radius:12px; padding:11px 14px; font:inherit;
+           font-size:15px; }
+
+    .status { min-height:18px; padding:2px 16px 6px; font-size:13px; color:var(--amber);
+              line-height:1.4; }
+    .status.err { color:var(--red); }
+
+    ul.list { list-style:none; margin:0; padding:8px 14px 20px; display:grid; gap:10px; }
+    li.note { background:var(--card); border:1px solid var(--line); border-radius:14px;
+              padding:13px 14px; animation:pop .2s ease; position:relative; }
+    @keyframes pop { from{opacity:0; transform:translateY(6px);} to{opacity:1;} }
+    .meta { display:flex; align-items:center; gap:8px; color:var(--sub); font-size:12px;
+            margin-bottom:7px; flex-wrap:wrap; }
+    .badge { background:#222a40; border-radius:6px; padding:2px 8px; font-size:11px; }
+    .badge.voice { color:var(--green); }
+    .badge.manual { color:var(--blue); }
+    .text { font-size:16px; line-height:1.55; white-space:pre-wrap; word-break:break-word;
+            padding-right:60px; }
+    .acts { position:absolute; top:10px; right:12px; display:flex; gap:4px; }
+    .acts button { background:transparent; color:var(--sub); padding:4px 8px; font-size:12px;
+                   border-radius:8px; }
+    .acts .edit:active { color:var(--blue); }
+    .acts .del:active { color:var(--red); }
+    .editbox { width:100%; min-height:72px; box-sizing:border-box; background:#0c1020;
+               border:1px solid var(--blue); color:var(--txt); border-radius:10px;
+               padding:10px 12px; font:inherit; font-size:16px; resize:vertical; margin-top:4px; }
+    .editbar { display:flex; gap:8px; margin-top:8px; justify-content:flex-end; }
+    .editbar button { padding:8px 16px; font-size:13px; }
+    .editbar .save { background:var(--green); color:#06281c; font-weight:600; }
+    .editbar .cancel { background:#222a40; color:var(--sub); }
+    .empty { color:var(--sub); text-align:center; padding:46px 20px; line-height:1.7; }
+    .count { color:var(--sub); font-size:12px; padding:0 16px 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="top">
+        <div class="brand">路远<small>手机记事</small></div>
+        <div class="spacer"></div>
+        <button class="refresh" id="refresh">刷新</button>
+      </div>
+      <button class="rec" id="rec">🎤 让电脑记录</button>
+    </header>
+
+    <div class="bar">
+      <textarea id="quick" rows="1" placeholder="在手机上直接打字记一笔，点「添加」…"></textarea>
+      <button class="add" id="add">添加</button>
+    </div>
+
+    <div class="search">
+      <input id="search" type="search" placeholder="搜索记事内容 / 标签…" />
+    </div>
+
+    <div class="status" id="status"></div>
+    <div class="count" id="count"></div>
+    <ul class="list" id="list"></ul>
+  </div>
+
+  <script>
+    // 路远手机版前端逻辑（自包含，仅调用现有 REST API）
+    const $ = (s) => document.querySelector(s);
+    const listEl = $("#list");
+    const statusEl = $("#status");
+    const countEl = $("#count");
+    const recBtn = $("#rec");
+    const quickEl = $("#quick");
+    const addBtn = $("#add");
+    const searchEl = $("#search");
+    const refreshBtn = $("#refresh");
+
+    let editing = false;        // 编辑态守卫：编辑中不自动刷新
+    let capturing = false;     // 电脑录音进行中
+    let currentQuery = "";     // 当前搜索词
+
+    async function api(path, opts) {
+      const r = await fetch(path, opts);
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    }
+
+    function escapeHtml(s) {
+      return (s || "").replace(/[&<>"']/g, c => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function fmtTime(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleString("zh-CN", { month: "2-digit", day: "2-digit",
+          hour: "2-digit", minute: "2-digit" });
+      } catch { return iso || ""; }
+    }
+
+    function setStatus(msg, isErr) {
+      statusEl.textContent = msg || "";
+      statusEl.classList.toggle("err", !!isErr);
+    }
+
+    async function loadNotes() {
+      if (editing) return;            // 编辑中不打断用户
+      try {
+        const url = currentQuery
+          ? "/api/search?q=" + encodeURIComponent(currentQuery)
+          : "/api/notes?limit=200";
+        const { notes } = await api(url);
+        render(notes);
+        const total = notes.length;
+        countEl.textContent = currentQuery
+          ? `搜索到 ${total} 条`
+          : (total ? `共 ${total} 条记事` : "");
+        setStatus("");
+      } catch (e) {
+        setStatus("无法连接路远服务（电脑端是否已运行？）", true);
+        listEl.innerHTML = '<div class="empty">连不上电脑上的路远服务。<br>请确认：电脑已启动「路远」、手机与电脑在同一 WiFi，<br>且电脑防火墙放行 8777 端口。</div>';
+      }
+    }
+
+    function render(notes) {
+      if (!notes.length) {
+        listEl.innerHTML = currentQuery
+          ? '<div class="empty">没有匹配的记事。<br>换个关键词试试。</div>'
+          : '<div class="empty">还没有记事。<br>点上面的「让电脑记录」说一句，或在手机上直接输入。</div>';
+        return;
+      }
+      listEl.innerHTML = notes.map(n => {
+        const src = n.source === "voice"
+          ? '<span class="badge voice">语音</span>'
+          : '<span class="badge manual">手动</span>';
+        const tags = (n.tags || []).map(t => `<span class="badge">#${escapeHtml(t)}</span>`).join("");
+        const upd = n.updated_at ? ' · 已编辑' : '';
+        return `<li class="note" data-id="${n.id}">
+          <div class="acts">
+            <button class="edit" data-id="${n.id}">编辑</button>
+            <button class="del" data-id="${n.id}">删除</button>
+          </div>
+          <div class="meta">${src} <span>${fmtTime(n.created_at)}</span>${upd} ${tags}</div>
+          <div class="text">${escapeHtml(n.text)}</div>
+        </li>`;
+      }).join("");
+    }
+
+    // ---- 新增（手机手动输入）----
+    async function addManual() {
+      const text = quickEl.value.trim();
+      if (!text) return;
+      try {
+        await api("/api/notes", { method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text, source: "manual" }) });
+        quickEl.value = "";
+        quickEl.style.height = "auto";
+        await loadNotes();
+        setStatus("已保存");
+      } catch (e) {
+        setStatus("保存失败：" + e.message, true);
+      }
+    }
+
+    // ---- 触发电脑端录音 ----
+    async function toggleCapture() {
+      if (capturing) {
+        try { await api("/api/capture/stop", { method: "POST" }); } catch {}
+        recBtn.textContent = "⏳ 识别中…";
+        recBtn.disabled = true;
+        return;
+      }
+      recBtn.disabled = true;
+      recBtn.textContent = "🎙️ 聆听中…";
+      setStatus("已向电脑发送录音请求，请开口说话…");
+      try {
+        const r = await api("/api/capture", { method: "POST" });
+        if (!r.triggered) {
+          recBtn.disabled = false;
+          recBtn.textContent = "🎤 让电脑记录";
+          setStatus("未触发（电脑可能正在记录，或未运行「路远」）。", true);
+        }
+      } catch (e) {
+        recBtn.disabled = false;
+        recBtn.textContent = "🎤 让电脑记录";
+        setStatus("发送失败：" + e.message, true);
+      }
+    }
+
+    // ---- 同步录音按钮状态（兼容 F12 热键）----
+    async function syncBtn() {
+      try {
+        const st = await api("/api/status");
+        if (st.state === "listening" || st.state === "transcribing") {
+          if (!capturing) {
+            capturing = true;
+            recBtn.classList.add("stop");
+            recBtn.textContent = "⏹ 停止记录";
+            recBtn.disabled = false;
+          }
+        } else {
+          if (capturing) {
+            capturing = false;
+            recBtn.classList.remove("stop");
+            recBtn.textContent = "🎤 让电脑记录";
+            recBtn.disabled = false;
+            await loadNotes();
+          }
+          if (st.state === "idle" && st.error) setStatus("⚠️ " + st.error, true);
+        }
+      } catch {}
+    }
+
+    // ---- 编辑（行内）----
+    function startEdit(id, li) {
+      const textEl = li.querySelector(".text");
+      if (!textEl || li.querySelector(".editbox")) return;
+      editing = true;
+      const box = document.createElement("textarea");
+      box.className = "editbox";
+      box.value = textEl.textContent;
+      textEl.replaceWith(box);
+      const bar = document.createElement("div");
+      bar.className = "editbar";
+      bar.innerHTML = '<button class="save" data-id="' + id + '">保存</button>'
+                    + '<button class="cancel" data-id="' + id + '">取消</button>';
+      li.appendChild(bar);
+      box.focus();
+      box.setSelectionRange(box.value.length, box.value.length);
+    }
+
+    listEl.addEventListener("click", async (e) => {
+      const id = e.target.getAttribute("data-id");
+      if (!id) return;
+      if (e.target.classList.contains("del")) {
+        if (!confirm("确定删除这条记事？")) return;
+        await api("/api/notes/" + id, { method: "DELETE" });
+        await loadNotes();
+      } else if (e.target.classList.contains("edit")) {
+        if (editing) return;
+        startEdit(id, e.target.closest("li.note"));
+      } else if (e.target.classList.contains("save")) {
+        const li = e.target.closest("li.note");
+        const text = li.querySelector(".editbox").value.trim();
+        if (!text) return;
+        await api("/api/notes/" + id, { method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }) });
+        editing = false;
+        await loadNotes();
+      } else if (e.target.classList.contains("cancel")) {
+        editing = false;
+        await loadNotes();
+      }
+    });
+
+    // ---- 搜索（输入即搜，防抖）----
+    let searchTimer = null;
+    searchEl.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        currentQuery = searchEl.value.trim();
+        loadNotes();
+      }, 250);
+    });
+
+    // 输入框随内容增高
+    quickEl.addEventListener("input", () => {
+      quickEl.style.height = "auto";
+      quickEl.style.height = Math.min(quickEl.scrollHeight, 160) + "px";
+    });
+    // 手机上回车即保存（避免换行键占用）
+    quickEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addManual(); }
+    });
+
+    recBtn.addEventListener("click", toggleCapture);
+    addBtn.addEventListener("click", addManual);
+    refreshBtn.addEventListener("click", loadNotes);
+
+    loadNotes();
+    setInterval(loadNotes, 5000);   // 多端查看时自动刷新
+    setInterval(syncBtn, 800);      // 同步录音按钮状态
+  </script>
+</body>
+</html>
